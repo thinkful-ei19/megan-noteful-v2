@@ -1,0 +1,3 @@
+ psql -f C:/Users/leona/projects/noteful-app-v2-w-database/noteful-app.1.sql postgres://uryhrvmo:JtuStWxf97WcTgEDYX290Kwwq3_MILui@nutty-custard-apple.db.elephantsql.com:5432/uryhrvmo
+
+ psql -f C:/Users/leona/projects/noteful-app-v2-w-database/notes-queries.sql postgres://uryhrvmo:JtuStWxf97WcTgEDYX290Kwwq3_MILui@nutty-custard-apple.db.elephantsql.com:5432/uryhrvmo
