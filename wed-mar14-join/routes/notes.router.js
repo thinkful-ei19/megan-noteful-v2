@@ -43,19 +43,18 @@ router.get('/notes', (req, res, next) => {
 router.get('/notes/:id', (req, res, next) => {
   const noteId = req.params.id;
   
-  knex.select('notes.id', 'title', 'content', 'folders.id as folder_id', 'folders.name as folderName')
+  let query = knex.select('notes.id', 'title', 'content', 'folders.id as folder_id', 'folders.name as folderName')
     .from('notes')
-    .leftJoin('folders', 'notes.folder_id', 'folders.id')
-    .where(function () {
-      if (noteId) {
-        this.where('notes.id', noteId);
-      }
-    })
-    .then(item => {
-      res.json(item);
-    })
+    .leftJoin('folders', 'notes.folder_id', 'folders.id');
+    
+  if(noteId) query = query.where('notes.id', noteId);
+
+  query.then(item => {
+    res.json(item);
+  })
     .catch(err=>next(err));
 });
+//simplified/dry version^
 
 
 
@@ -84,10 +83,11 @@ router.put('/notes/:id', (req, res, next) => {
     .update({title: `${updateObj.title}`, content: `${updateObj.content}`, folder_id:`${updateObj.folder_id}`})  
     .where(function(){
       if(noteId){
-        this.where('id', `${noteId}`);
+        this.where('id', noteId);
       }
     })
-    .then(noteId =>{
+    .returning('id')
+    .then(([noteId]) =>{
       return knex.select('notes.id', 'title', 'content', 'folder_id', 'folders.name as folder_name')
         .from('notes')
         .leftJoin('folders', 'notes.folder_id', 'folders.id')
