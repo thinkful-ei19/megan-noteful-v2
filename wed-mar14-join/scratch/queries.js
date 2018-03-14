@@ -27,4 +27,3 @@ knex('notes')
   .where('id', 1012)
   .del()
   .then(res=>console.log(res));
-
