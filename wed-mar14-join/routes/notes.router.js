@@ -17,8 +17,7 @@ const notes = simDB.initialize(data);
 // Get All (and search by query)
 /* ========== GET/READ ALL NOTES ========== */
 router.get('/notes', (req, res, next) => {
-  const { searchTerm } = req.query;
-  const folderId = req.params.id;
+  const { searchTerm, folderId } = req.query;
   knex.select('notes.id', 'title', 'content', 'folders.id as folder_id', 'folders.name as folderName')
     .from('notes')
     .leftJoin('folders', 'notes.folder_id', 'folders.id')
@@ -48,8 +47,9 @@ router.get('/notes/:id', (req, res, next) => {
     .leftJoin('folders', 'notes.folder_id', 'folders.id');
     
   if(noteId) query = query.where('notes.id', noteId);
+  
 
-  query.then(item => {
+  query.then(([item]) => {
     res.json(item);
   })
     .catch(err=>next(err));
@@ -114,7 +114,7 @@ router.post('/notes', (req, res, next) => {
   // Insert new note, instead of returning all the fields, just return the new `id`
   knex.insert(newItem)
     .into('notes')
-    .returning('id')
+    .returning(['id', 'title', 'content' ])
     .then(([id]) => {
       noteId = id;
       // Using the new id, select the new note and the folder

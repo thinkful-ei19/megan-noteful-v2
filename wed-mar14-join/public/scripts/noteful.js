@@ -4,6 +4,7 @@
 const noteful = (function () {
 
   function render() {
+    console.log('render starting');
     const notesList = generateNotesList(store.notes, store.currentNote);
     $('.js-notes-list').html(notesList);
 

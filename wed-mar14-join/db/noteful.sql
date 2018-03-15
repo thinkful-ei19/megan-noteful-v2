@@ -1,9 +1,13 @@
 -- psql -U dev -f ./db/noteful.sql -d noteful-app
 SELECT CURRENT_DATE;
 
+DROP TABLE IF EXISTS notes_tags;
+DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS notes;
 DROP TABLE IF EXISTS folders ;
---why is it not dropping the table?
+
+
+
 CREATE TABLE folders (
     id serial PRIMARY KEY,
     name text NOT NULL
@@ -80,8 +84,23 @@ INSERT INTO notes (title, content, folder_id) VALUES
   ,103
   );
 
--- -- get all notes
--- SELECT * FROM notes;
+  
+
+CREATE TABLE tags (
+  id serial PRIMARY KEY,
+  name text NOT NULL
+);
+
+INSERT INTO tags (name) VALUES
+('happy'), ('sad'), ('favorite');
 
 
 
+CREATE TABLE notes_tags (
+  note_id INTEGER NOT NULL REFERENCES notes ON DELETE CASCADE,
+  tag_id INTEGER NOT NULL REFERENCES tags ON DELETE CASCADE
+);
+
+INSERT INTO notes_tags (note_id, tag_id) VALUES
+(1000, 1),
+(1001, 2), (1001, 1), (1001, 3);
