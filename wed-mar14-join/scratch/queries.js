@@ -27,3 +27,5 @@ knex('notes')
   .where('id', 1012)
   .del()
   .then(res=>console.log(res));
+
+  .leftJoin('notes_tags', 'notes.id', "notes_tags.notes_id")
