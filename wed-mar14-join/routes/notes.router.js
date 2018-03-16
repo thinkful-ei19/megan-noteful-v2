@@ -97,9 +97,9 @@ router.put('/notes/:id', (req, res, next) => {
     return next(err);
   }
 
+
   knex('notes')
-    .update({title: `${updateObj.title}`, content: `${updateObj.content}`, 
-      folder_id:`${updateObj.folder_id}`})  
+    .update(updateObj)  
     .where(function(){
       if(noteId){
         this.where('id', noteId);
@@ -127,14 +127,14 @@ router.put('/notes/:id', (req, res, next) => {
     })
     .then(result => {
       if (result) {
-        const hydrated = hydrateNotes(result);
+        const [hydrated] = hydrateNotes(result);
         res.json(hydrated);
       } else {
         next();
       }
     })
   
-    .catch(err => {console.error(err); res.sendStatus(500);});
+    .catch(err => {console.error(err); res.status(500).json(err);});
 });
 
 /* ========== POST/CREATE ITEM ========== */
@@ -148,6 +148,12 @@ router.post('/notes', (req, res, next) => {
     content: content,
     folder_id: folder_id,  // Add `folder_id`
   };
+
+  if (!newItem.title) {
+    const err = new Error('Missing `title` in request body');
+    err.status = 400;
+    return next(err);
+  }
 
   let noteId;
   // Insert new note into notes table
