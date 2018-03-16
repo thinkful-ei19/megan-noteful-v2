@@ -90,7 +90,7 @@ describe('Noteful API', function () {
 
 
   describe('GET /api/notes', function () {
-
+    //done
     it('should return the default of 10 Notes ', function () {
       let count;
       return knex.count()
@@ -106,23 +106,28 @@ describe('Noteful API', function () {
           expect(res.body).to.have.length(count);
         });
     });
-
+    //done?
     it('should return a list with the correct right fields', function () {
-      return chai.request(app)
-        .get('/api/notes')
+      let count;
+      return knex('notes').count()
+        .then(([result]) => {
+          count = Number(result.count);
+          return chai.request(app).get('/api/notes');
+        })
         .then(function (res) {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
           expect(res.body).to.be.a('array');
-          expect(res.body).to.have.length(10);
+          expect(res.body).to.have.length(count);
           res.body.forEach(function (item) {
             expect(item).to.be.a('object');
-            expect(item).to.include.keys('id', 'title', 'content');
+            expect(item).to.include.keys('id', 'title', 'content', 'folder_id', 'folderName', 'tags');
           });
         });
     });
 
 
+    //done
     it('should return correct search results for a searchTerm query', function () {
       let res;
       return chai.request(app).get('/api/notes?searchTerm=gaga')
@@ -140,7 +145,7 @@ describe('Noteful API', function () {
         });
     });
 
-
+    //done
     it('should search by folder id', function () {
       const dataPromise = knex.select()
         .from('notes')
@@ -163,13 +168,20 @@ describe('Noteful API', function () {
 
 
     it('should return an empty array for an incorrect query', function () {
-      return chai.request(app)
-        .get('/api/notes?searchTerm=Not%20a%20Valid%20Search')
-        .then(function (res) {
+      
+      let res;
+      return chai.request(app).get('/api/notes?searchTerm=Not%20a%20Valid%20Search')
+        .then(function (_res) {
+          res=_res;
           expect(res).to.have.status(200);
           expect(res).to.be.json;
           expect(res.body).to.be.a('array');
           expect(res.body).to.have.length(0);
+          return knex('notes').select().where('title', 'like', 
+            '%Not a valid search%');
+        })
+        .then(data=>{
+          expect(res.body.length).to.equal(data.length);
         });
     });
 
@@ -178,21 +190,29 @@ describe('Noteful API', function () {
   describe('GET /api/notes/:id', function () {
 
     it('should return correct notes', function () {
-      return chai.request(app)
-        .get('/api/notes/1000')
-        .then(function (res) {
+      let res;
+      return chai.request(app).get('/api/notes/1000')
+        .then(function (_res) {
+          res=_res;
           expect(res).to.have.status(200);
           expect(res).to.be.json;
           expect(res.body).to.be.an('object');
           expect(res.body).to.include.keys('id', 'title', 'content');
           expect(res.body.id).to.equal(1000);
           expect(res.body.title).to.equal('5 life lessons learned from cats');
+          return knex('notes').select().where('id', 1000);
+        })
+        .then(data=>{
+          expect(res.body.id).to.equal(data[0].id);
+          expect(res.body.title).to.equal(data[0].title);
+          expect(res.body.content).to.equal(data[0].content);
+          expect(res.body.folder_id).to.equal(data[0].folder_id);
         });
     });
   });
 
   describe('POST /api/notes', function () {
-
+    //done
     it('should create and return a new item when provided valid data', function () {
       const newItem = {
         'title': 'The best article about cats ever!',
@@ -217,76 +237,114 @@ describe('Noteful API', function () {
           expect(body.content).to.equal(data.content);
         });
     });
-
     it('should return an error when missing "title" field', function () {
       const newItem = {
         'foo': 'bar'
       };
-      return chai.request(app)
-        .post('/api/notes')
-        .send(newItem)
-        .catch(err => err.response)
-        .then(res => {
-          expect(res).to.have.status(400);
-          expect(res).to.be.json;
-          expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('Missing `title` in request body');
-        });
-    });
-
-  });
-
-  describe('PUT /api/notes/:id', function () {
-
-    it('should update the note', function () {
-      const updateItem = {
-        'title': 'What about dogs?!',
-        'content': 'woof woof',
-        'tags': []
-      };
-      return chai.request(app)
-        .put('/api/notes/1005')
-        .send(updateItem)
-        .then(function (res) {
-          expect(res).to.have.status(200);
-          expect(res).to.be.json;
-          expect(res.body).to.be.a('object');
-          expect(res.body).to.include.keys('id', 'title', 'content');
-
-          expect(res.body.id).to.equal(1005);
-          expect(res.body.title).to.equal(updateItem.title);
-          expect(res.body.content).to.equal(updateItem.content);
-        });
-    });
-
-    it('should return an error when missing "title" field', function () {
-      const updateItem = {
-        'foo': 'bar'
-      };
-      return chai.request(app)
-        .put('/api/notes/9999')
-        .send(updateItem)
-        .catch(err => err.response)
-        .then(res => {
-          expect(res).to.have.status(400);
-          expect(res).to.be.json;
-          expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('Missing `title` in request body');
-        });
-    });
-
-  });
-
-  describe('DELETE  /api/notes/:id', function () {
-
-    it('should delete an item by id', function () {
-      return chai.request(app)
-        .delete('/api/notes/1005')
-        .then(function (res) {
-          expect(res).to.have.status(204);
-        });
-    });
     
-  });
+      let notesLength;
 
+      return knex('notes').select()
+
+        .then(arrayOfNotes =>{
+          notesLength=arrayOfNotes.length;
+          // console.log(notesLength);
+          return chai.request(app).post('/api/notes').send(newItem)
+            .catch(err => err.response);
+        })
+        .then(res => {
+          expect(res).to.have.status(400);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('Missing `title` in request body');
+          return knex('notes').select();
+        })
+        .then(data=>{
+          expect (notesLength).to.equal(data.length);
+        });
+    });
+        
+
+    describe('PUT /api/notes/:id', function () {
+
+      it('should update the note', function () {
+        const updateItem = {
+          'title': 'What about dogs?!',
+          'content': 'woof woof',
+          'tags': []
+        };
+        let body;
+        return chai.request(app).put('/api/notes/1005').send(updateItem)
+          .then(function (res) {
+            body=res.body;
+            expect(res).to.have.status(200);
+            expect(res).to.be.json;
+            expect(res.body).to.be.a('object');
+            expect(res.body).to.include.keys('id', 'title', 'content');
+
+            expect(res.body.id).to.equal(1005);
+            expect(res.body.title).to.equal(updateItem.title);
+            expect(res.body.content).to.equal(updateItem.content);
+            return knex('notes').select().where('id', body.id);
+          })
+          .then(data =>{
+            expect(body.title).to.equal(data[0].title);
+            expect(body.content).to.equal(data[0].content);
+          });
+      });
+
+      it('should return an error when missing "title" field', function () {
+        const badItem = {
+          'foo': 'bar'
+        };
+
+        let goodItem;
+        return knex('notes').select().where('id', 1005)
+          .then(res =>{
+            goodItem = res;
+            //console.log(goodItem);
+            return chai.request(app)
+              .put('/api/notes/1005')
+              .send(badItem)
+              .catch(err => err.response);
+          })
+          .then(res => {
+            expect(res).to.have.status(400);
+            expect(res).to.be.json;
+            expect(res.body).to.be.a('object');
+            expect(res.body.message).to.equal('Missing `title` in request body');
+            return knex('notes').select().where('id', 1005);
+          })
+          .then(data =>{
+            expect(goodItem[0].title).to.equal(data[0].title);
+            expect(goodItem[0].content).to.equal(data[0].content);
+            expect(goodItem[0].id).to.equal(data[0].id);
+          });
+      });
+
+    });
+
+    describe('DELETE  /api/notes/:id', function () {
+
+      it.only('should delete an item by id', function () {
+          
+        let beforeDelete;
+        return knex('notes').select().where('id', 1005)
+          .then(res=>{
+            beforeDelete=res;
+            return chai.request(app).delete('/api/notes/1005');
+          })
+          .then(function (res) {
+            expect(res).to.have.status(204);
+            return knex('notes').select().where('id', 1005);
+          })
+          .then(data=>{
+            expect(beforeDelete[0]).to.not.equal(data[0]);
+            expect(data).to.be.a('array');//empty array
+            expect(data[0]).to.be.undefined;
+            expect(data.length).to.equal(0);
+          });
+      });
+    });
+  });
 });

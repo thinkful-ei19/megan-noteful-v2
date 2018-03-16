@@ -23,9 +23,12 @@ const knex = require('../knex');
 //   .insert({title : 'pop', content :'testing'})
 //   .then(console.log);
 
-knex('notes')
-  .where('id', 1012)
-  .del()
-  .then(res=>console.log(res));
+// knex('notes').select()
+//   .where('title', 'like', '%not a valid search%')
+//   .then(res=>console.log(res));
 
-  .leftJoin('notes_tags', 'notes.id', "notes_tags.notes_id")
+const newItem = {content :'testing', folder_id: null};
+
+knex('notes')
+  .insert(newItem)
+  .then(console.log);
